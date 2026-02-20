@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rapihkan Data Pelanggaran</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial, sans-serif;
+background:linear-gradient(180deg,#0d2b52,#b30000);
+padding:30px;
+color:white;
+}
+
+.container{
+max-width:850px;
+margin:auto;
+background:white;
+color:black;
+padding:30px;
+border-radius:15px;
+box-shadow:0 0 20px rgba(0,0,0,0.4);
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+input, select, textarea{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+textarea{
+resize:none;
+}
+
+button{
+margin-top:15px;
+padding:10px 20px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn1{background:#00c853;color:white;}
+.btn2{background:#2962ff;color:white;margin-left:10px;}
+
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:13px;
+opacity:0.7;
+}
+.creator{
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 1px;
+    font-weight: 500;
+    background: rgba(0,0,0,0.15);
+    padding: 5px 10px;
+    border-radius: 15px;
+    backdrop-filter: blur(3px);
+}
+</style>
+</head>
+
+<body>
+  
+  <div class="creator">
+    Dibuat oleh Organisasi KPD
+</div>
+  <!-- SPLASH SCREEN -->
+<div id="splash">
+<div class="logo">✈</div>
+<h1>KORPS PENEGAK DISIPLIN</h1>
+<p>Sikap Taruna Yang Sigap • Cepat • Tanggap • Adil • Berani</p>
+</div>
+
+<div id="searchPage">
+<div class="container">
+
+
+<h2>Rapihkan Data Pelanggaran</h2>
+
+<select id="hari">
+<option>Senin</option>
+<option>Selasa</option>
+<option>Rabu</option>
+<option>Kamis</option>
+<option>Jum'at</option>
+<option>Sabtu</option>
+<option>Minggu</option>
+</select>
+
+<input type="number" id="tanggal" placeholder="Tanggal">
+<input type="text" id="bulan" placeholder="Bulan (contoh: Februari)">
+<input type="number" id="tahun" placeholder="Tahun">
+
+<textarea id="rawData" rows="10"
+placeholder="Tempel data seperti contoh:
+
+Taruna:
+Nama 1 ...
+Nama 2 ...
+
+Taruni:
+Nama 3 ...
+Nama 4 ...
+"></textarea>
+
+<button class="btn1" onclick="rapihkan()">RAPIHKAN</button>
+<button class="btn2" onclick="copyText()">COPY</button>
+<button style="background:#d50000;color:white;margin-left:10px;" onclick="resetForm()">HAPUS</button>
+
+<textarea id="hasil" rows="15"
+placeholder="Hasil akan muncul di sini..."></textarea>
+
+</div>
+
+<div class="footer">Korps Penegak Disiplin</div>
+
+<script>
+  
+  function resetForm(){
+
+document.getElementById("rawData").value = "";
+document.getElementById("hasil").value = "";
+document.getElementById("tanggal").value = "";
+document.getElementById("bulan").value = "";
+document.getElementById("tahun").value = "";
+
+alert("Data berhasil dibersihkan!");
+}
+
+function rapihkan(){
+
+let hari = document.getElementById("hari").value;
+let tanggal = document.getElementById("tanggal").value;
+let bulan = document.getElementById("bulan").value;
+let tahun = document.getElementById("tahun").value;
+let raw = document.getElementById("rawData").value.trim();
+
+if(!tanggal || !bulan || !tahun){
+alert("Lengkapi tanggal terlebih dahulu!");
+return;
+}
+
+let lines = raw.split(/\n+/).map(l => l.trim()).filter(l => l !== "");
+
+let taruna = [];
+let taruni = [];
+let mode = null;
+
+// BACA BLOK DENGAN BENAR
+for(let i=0; i<lines.length; i++){
+
+let line = lines[i].toUpperCase();
+
+if(line === "TARUNA:" || line === "TARUNA"){
+mode = "taruna";
+continue;
+}
+
+if(line === "TARUNI:" || line === "TARUNI"){
+mode = "taruni";
+continue;
+}
+
+if(mode === "taruna"){
+taruna.push(lines[i]);
+}
+
+if(mode === "taruni"){
+taruni.push(lines[i]);
+}
+
+}
+
+// ATURAN SORTING
+const tingkatOrder = { "X":1, "XI":2, "XII":3 };
+const jurusanOrder = { "AP":1, "EA":2, "TEI":3, "TPTU":4 };
+
+function ambilData(text){
+
+let tingkat = text.match(/\bXII\b|\bXI\b|\bX\b/);
+let jurusan = text.match(/\bAP\b|\bEA\b|\bTEI\b|\bTPTU\b/);
+let kelas = text.match(/\b[1-3]\b/);
+
+return {
+tingkat: tingkat ? tingkat[0] : "",
+jurusan: jurusan ? jurusan[0] : "",
+kelas: kelas ? parseInt(kelas[0]) : 0
+};
+
+}
+
+function sorter(a,b){
+
+let A = ambilData(a);
+let B = ambilData(b);
+
+if(tingkatOrder[A.tingkat] !== tingkatOrder[B.tingkat])
+return tingkatOrder[A.tingkat] - tingkatOrder[B.tingkat];
+
+if(jurusanOrder[A.jurusan] !== jurusanOrder[B.jurusan])
+return jurusanOrder[A.jurusan] - jurusanOrder[B.jurusan];
+
+return A.kelas - B.kelas;
+}
+
+taruna.sort(sorter);
+taruni.sort(sorter);
+
+// FORMAT AKHIR
+let hasil = 
+`Assalamu'alaikum, izin abang/kakak tingkat 2, saya ingin mengirimkan catatan pelanggaran pada hari (${hari}, ${tanggal} ${bulan} ${tahun})\n\n`;
+
+hasil += "Taruni:\n";
+taruni.forEach((nama,i)=>{
+hasil += (i+1) + ". " + nama + "\n";
+});
+
+hasil += "\nTARUNA:\n";
+taruna.forEach((nama,i)=>{
+hasil += (i+1) + ". " + nama + "\n";
+});
+
+document.getElementById("hasil").value = hasil;
+
+}
+
+// COPY MODERN
+function copyText(){
+
+let textarea = document.getElementById("hasil");
+
+textarea.select();
+textarea.setSelectionRange(0, 99999);
+
+try{
+document.execCommand("copy");
+alert("Teks berhasil di-copy!");
+}catch(err){
+alert("Browser tidak mendukung auto copy. Silakan copy manual.");
+}
+
+}
+
+</script>
+
+</body>
+</html>
